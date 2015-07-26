@@ -115,8 +115,13 @@ put = State . const . (,) ()
 -- >>> let p x = (\s -> (const $ pure (x == 'i')) =<< put (1+s)) =<< get in runState (findM p $ listh ['a'..'h']) 0
 -- (Empty,8)
 findM :: Monad m => (a -> m Bool) -> List a -> m (Optional a)
-findM mp xs = undefined
-    
+findM _ Nil     = pure Empty
+findM f (x:.xs) = predicate <$> f x >>= continue
+    where
+        predicate y    = if y then Full x else Empty
+        continue Empty = findM f xs
+        continue a     = pure a
+
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
 --
@@ -124,12 +129,11 @@ findM mp xs = undefined
 --
 -- prop> case firstRepeat xs of Empty -> let xs' = hlist xs in nub xs' == xs'; Full x -> length (filter (== x) xs) > 1
 -- prop> case firstRepeat xs of Empty -> True; Full x -> let (l, (rx :. rs)) = span (/= x) xs in let (l2, r2) = span (/= x) rs in let l3 = hlist (l ++ (rx :. Nil) ++ l2) in nub l3 == l3
-firstRepeat ::
-  Ord a =>
-  List a
-  -> Optional a
-firstRepeat =
-  error "todo: Course.State#firstRepeat"
+firstRepeat :: Ord a => List a -> Optional a
+firstRepeat xs = eval (findM f xs) S.empty
+    where
+        f :: Ord a => a -> State (S.Set a) Bool
+        f a = State (S.member a &&& S.insert a)
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -137,12 +141,12 @@ firstRepeat =
 -- prop> firstRepeat (distinct xs) == Empty
 --
 -- prop> distinct xs == distinct (flatMap (\x -> x :. x :. Nil) xs)
-distinct ::
-  Ord a =>
-  List a
-  -> List a
-distinct =
-  error "todo: Course.State#distinct"
+distinct :: Ord a => List a -> List a
+distinct xs = eval (filtering f xs) S.empty
+    where
+        f :: Ord a => a -> State (S.Set a) Bool
+        f a = State (\s -> (not (S.member a s), S.insert a s))
+
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
@@ -165,8 +169,8 @@ distinct =
 --
 -- >>> isHappy 44
 -- True
-isHappy ::
-  Integer
-  -> Bool
-isHappy =
-  error "todo: Course.State#isHappy"
+isHappy :: Integer -> Bool
+isHappy = contains 1 . firstRepeat . series
+    where
+        f = sum . map ((P.^ 2) . digitToInt) . listh . show
+        series = produce f . fromInteger

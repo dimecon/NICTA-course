@@ -156,7 +156,7 @@ filtering ::
   -> f (List a)
 filtering p = foldRight f (pure Nil)
     where
-        f x acc = lift2 (\b -> if b then (x :.) else id) (p x) acc
+        f x = lift2 (\b -> if b then (x :.) else id) (p x)
 
 -----------------------
 -- SUPPORT LIBRARIES --
