@@ -268,7 +268,7 @@ distinctG xs = runOptionalT $ evalT (filtering f xs) S.empty
         f x | x >= 100  = builder (abortMessage x) (const Empty)
             | even x    = builder (evenMessage x)  (win x)
             | otherwise = builder Nil              (win x)
-        win y           =  Full . (S.notMember y &&& S.insert y)
+        win y           = Full . (S.notMember y &&& S.insert y)
         abortMessage y  = ("aborting > 100: " ++ show' y) :. Nil
         evenMessage y   = ("even number: " ++ show' y) :. Nil
         builder msg fn  = StateT $ OptionalT . Logger msg . fn
