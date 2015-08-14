@@ -438,11 +438,8 @@ takeWhile ::
 takeWhile _ Nil =
   Nil
 takeWhile p (x:.xs) =
-  if p x
-    then
-      x :. takeWhile p xs
-    else
-      Nil
+    if p x then x :. takeWhile p xs
+           else Nil 
 
 zip ::
   List a
