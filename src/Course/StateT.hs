@@ -189,10 +189,10 @@ instance Applicative f => Applicative (OptionalT f) where
 -- [Full 2,Full 3,Empty]
 instance Monad f => Bind (OptionalT f) where
   f =<< (OptionalT ma) =
-      ma >>= \oA ->
+      OptionalT $ ma >>= (\oA ->
           case oA of
                Full a -> runOptionalT (f a)
-               Empty -> pure Empty
+               Empty -> pure Empty)
 
 
 instance Monad f => Monad (OptionalT f) where
@@ -207,8 +207,7 @@ data Logger l a =
 -- >>> (+3) <$> Logger (listh [1,2]) 3
 -- Logger [1,2] 6
 instance Functor (Logger l) where
-  (<$>) =
-    error "todo: Course.StateT (<$>)#instance (Logger l)"
+  (<$>) f (Logger l a) = Logger l (f a)
 
 -- | Implement the `Apply` instance for `Logger`.
 --
