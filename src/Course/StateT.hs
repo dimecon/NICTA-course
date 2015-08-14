@@ -175,7 +175,9 @@ instance Functor f => Functor (OptionalT f) where
 -- >>> runOptionalT $ OptionalT (Full (+1) :. Full (+2) :. Nil) <*> OptionalT (Full 1 :. Empty :. Nil)
 -- [Full 2,Empty,Full 3,Empty]
 instance Apply f => Apply (OptionalT f) where
-  (OptionalT ff) <*> (OptionalT fa) = undefined
+  OptionalT ff <*> OptionalT fa =
+      OptionalT (((<*>) <$> ff) <*> fa)
+      
 
 -- | Implement the `Applicative` instance for `OptionalT f` given a Applicative f.
 instance Applicative f => Applicative (OptionalT f) where
