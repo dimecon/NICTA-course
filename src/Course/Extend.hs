@@ -33,7 +33,7 @@ instance Extend Id where
     (Id a -> b)
     -> Id a
     -> Id b
-  (<<=) f a = Id (f a) 
+  (<<=) f = Id . f
 
 -- | Implement the @Extend@ instance for @List@.
 --
