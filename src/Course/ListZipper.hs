@@ -378,7 +378,13 @@ dropRights (ListZipper l a _) =
 -- >>> moveLeftN (-1) $ zipper [2,1,0] 3 [4,5,6]
 -- [3,2,1,0] >4< [5,6]
 moveLeftN :: Int -> ListZipper a -> MaybeListZipper a
-moveLeftN n lza = undefined
+moveLeftN n lza
+    | n <= 0    = moveRightN (negate n) lza
+    | otherwise = go (n-1) (moveLeft lza)
+        where
+            go _ IsNotZ  = IsNotZ
+            go 0 l       = l
+            go x (IsZ l) = go (x-1) (moveLeft l)
 
 -- | Move the focus right the given number of positions. If the value is negative, move left instead.
 --
@@ -391,8 +397,13 @@ moveRightN ::
   Int
   -> ListZipper a
   -> MaybeListZipper a
-moveRightN =
-  error "todo: Course.ListZipper#moveRightN"
+moveRightN n lza 
+    | n <= 0    = moveLeftN (negate n) lza
+    | otherwise = go (n-1) (moveRight lza)
+        where
+            go _ IsNotZ  = IsNotZ
+            go 0 l       = l
+            go x (IsZ l) = go (x-1) (moveRight l)
 
 -- | Move the focus left the given number of positions. If the value is negative, move right instead.
 -- If the focus cannot be moved, the given number of times, return the value by which it can be moved instead.
@@ -417,10 +428,7 @@ moveRightN =
 --
 -- >>> moveLeftN' (-4) (zipper [5,4,3,2,1] 6 [7,8,9])
 -- Left 3
-moveLeftN' ::
-  Int
-  -> ListZipper a
-  -> Either Int (ListZipper a)
+moveLeftN' :: Int -> ListZipper a -> Either Int (ListZipper a)
 moveLeftN' =
   error "todo: Course.ListZipper#moveLeftN'"
 
@@ -441,10 +449,7 @@ moveLeftN' =
 --
 -- >>> moveRightN' (-4) (zipper [3,2,1] 4 [5,6,7])
 -- Left 3
-moveRightN' ::
-  Int
-  -> ListZipper a
-  -> Either Int (ListZipper a)
+moveRightN' :: Int -> ListZipper a -> Either Int (ListZipper a)
 moveRightN' =
   error "todo: Course.ListZipper#moveRightN'"
 
