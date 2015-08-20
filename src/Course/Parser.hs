@@ -357,7 +357,14 @@ alpha = satisfy isAlpha
 -- >>> isErrorResult (parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "abCdef")
 -- True
 sequenceParser :: List (Parser a) -> Parser (List a)
-sequenceParser = foldRight (\x acc -> bindParser (\as -> _f ) acc) (pure Nil)
+sequenceParser Nil =
+        valueParser Nil 
+sequenceParser (p :. ps) = 
+        flbindParser p (\a -> 
+            flbindParser (sequenceParser ps) (\b ->
+                valueParser (a :. b)
+            )
+        ) 
 
 -- | Return a parser that produces the given number of values off the given parser.
 -- This parser fails if the given parser fails in the attempt to produce the given number of values.
