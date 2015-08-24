@@ -376,12 +376,8 @@ sequenceParser (p :. ps) =
 --
 -- >>> isErrorResult (parse (thisMany 4 upper) "ABcDef")
 -- True
-thisMany ::
-  Int
-  -> Parser a
-  -> Parser (List a)
-thisMany =
-  error "todo: Course.Parser#thisMany"
+thisMany :: Int -> Parser a -> Parser (List a)
+thisMany n = sequenceParser . replicate n
 
 -- | Write a parser for Person.age.
 --
@@ -397,10 +393,8 @@ thisMany =
 --
 -- >>> isErrorResult (parse ageParser "-120")
 -- True
-ageParser ::
-  Parser Int
-ageParser =
-  error "todo: Course.Parser#ageParser"
+ageParser :: Parser Int
+ageParser = natural
 
 -- | Write a parser for Person.firstName.
 -- /First Name: non-empty string that starts with a capital letter and is followed by zero or more lower-case letters/
@@ -414,8 +408,10 @@ ageParser =
 -- True
 firstNameParser ::
   Parser Chars
-firstNameParser =
-  error "todo: Course.Parser#firstNameParser"
+firstNameParser = 
+    upper `flbindParser` \a -> 
+        (list lower) `flbindParser` \b ->
+            valueParser (a :. b)
 
 -- | Write a parser for Person.surname.
 --
@@ -431,10 +427,12 @@ firstNameParser =
 --
 -- >>> isErrorResult (parse surnameParser "abc")
 -- True
-surnameParser ::
-  Parser Chars
+surnameParser :: Parser Chars
 surnameParser =
-  error "todo: Course.Parser#surnameParser"
+    upper `flbindParser` \a ->
+        (thisMany 5 lower) `flbindParser` \b ->
+            (list lower) `flbindParser` \c ->
+                valueParser ((a :. b) ++ c)
 
 -- | Write a parser for Person.smoker.
 --
@@ -450,10 +448,8 @@ surnameParser =
 --
 -- >>> isErrorResult (parse smokerParser "abc")
 -- True
-smokerParser ::
-  Parser Char
-smokerParser =
-  error "todo: Course.Parser#smokerParser"
+smokerParser :: Parser Char
+smokerParser = is 'y' ||| is 'n'
 
 -- | Write part of a parser for Person#phoneBody.
 -- This parser will only produce a string of digits, dots or hyphens.
@@ -472,10 +468,9 @@ smokerParser =
 --
 -- >>> parse phoneBodyParser "a123-456"
 -- Result >a123-456< ""
-phoneBodyParser ::
-  Parser Chars
+phoneBodyParser :: Parser Chars
 phoneBodyParser =
-  error "todo: Course.Parser#phoneBodyParser"
+    list (digit ||| is '-' ||| is '.')
 
 -- | Write a parser for Person.phone.
 --
@@ -494,10 +489,11 @@ phoneBodyParser =
 --
 -- >>> isErrorResult (parse phoneParser "a123-456")
 -- True
-phoneParser ::
-  Parser Chars
+phoneParser :: Parser Chars
 phoneParser =
-  error "todo: Course.Parser#phoneParser"
+    digit `flbindParser` \a ->
+        phoneBodyParser `flbindParser` \b ->
+            is '#' >>> valueParser (a :. b)
 
 -- | Write a parser for Person.
 --
@@ -543,10 +539,14 @@ phoneParser =
 --
 -- >>> parse personParser "123 Fred Clarkson y 123-456.789# rest"
 -- Result > rest< Person {age = 123, firstName = "Fred", surname = "Clarkson", smoker = 'y', phone = "123-456.789"}
-personParser ::
-  Parser Person
+personParser :: Parser Person
 personParser =
-  error "todo: Course.Parser#personParser"
+    ageParser `flbindParser` \a ->
+        spaces1 >>> firstNameParser `flbindParser` \fname ->
+            spaces1 >>> surnameParser `flbindParser` \lname ->
+                spaces1 >>> smokerParser `flbindParser` \s ->
+                    spaces1 >>> phoneParser `flbindParser` \p ->
+                        valueParser (Person a fname lname s p)
 
 -- Make sure all the tests pass!
 
@@ -558,8 +558,7 @@ instance Functor Parser where
     (a -> b)
     -> Parser a
     -> Parser b
-  (<$>) =
-     error "todo: Course.Parser (<$>)#instance Parser"
+  (<$>) f = bindParser (valueParser . f)
 
 -- | Write a Apply instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.
@@ -568,16 +567,14 @@ instance Apply Parser where
     Parser (a -> b)
     -> Parser a
     -> Parser b
-  (<*>) =
-    error "todo: Course.Parser (<*>)#instance Parser"
+  pf <*> pa = bindParser (\f -> bindParser (valueParser . f) pa) pf
 
 -- | Write an Applicative functor instance for a @Parser@.
 instance Applicative Parser where
   pure ::
     a
     -> Parser a
-  pure =
-    error "todo: Course.Parser pure#instance Parser"
+  pure = valueParser
 
 -- | Write a Bind instance for a @Parser@.
 instance Bind Parser where
@@ -585,7 +582,6 @@ instance Bind Parser where
     (a -> Parser b)
     -> Parser a
     -> Parser b
-  (=<<) =
-    error "todo: Course.Parser (=<<)#instance Parser"
+  (=<<) = bindParser
 
 instance Monad Parser where
