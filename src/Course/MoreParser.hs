@@ -1,18 +1,18 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RebindableSyntax #-}
 
 module Course.MoreParser where
 
-import Course.Core
-import Course.Parser
-import Course.List
-import Course.Optional
-import Course.Applicative
-import Course.Apply
-import Course.Bind
-import Course.Functor
-import Course.Traversable
+import           Course.Applicative
+import           Course.Apply
+import           Course.Bind
+import           Course.Core
+import           Course.Functor
+import           Course.List
+import           Course.Optional
+import           Course.Parser
+import           Course.Traversable
 
 -- $setup
 -- >>> :set -XOverloadedStrings
@@ -208,7 +208,11 @@ betweenCharTok o c = between (charTok o) (charTok c)
 -- >>> isErrorResult (parse hex "0axf")
 -- True
 hex :: Parser Char
-hex = undefined
+hex = 
+    replicateA 4 (satisfy isHexDigit) >>= \a ->
+        case chr <$> readHex a of
+            Full c -> return c
+            Empty -> failed
 
 -- | Write a function that parses the character 'u' followed by 4 hex digits and return the character value.
 --
@@ -228,10 +232,8 @@ hex = undefined
 --
 -- >>> isErrorResult (parse hexu "u0axf")
 -- True
-hexu ::
-  Parser Char
-hexu =
-  error "todo: Course.MoreParser#hexu"
+hexu :: Parser Char
+hexu = is 'u' >>> hex
 
 -- | Write a function that produces a non-empty list of values coming off the given parser (which must succeed at least once),
 -- separated by the second given parser.
@@ -249,12 +251,9 @@ hexu =
 --
 -- >>> isErrorResult (parse (sepby1 character (is ',')) "")
 -- True
-sepby1 ::
-  Parser a
-  -> Parser s
-  -> Parser (List a)
-sepby1 =
-  error "todo: Course.MoreParser#sepby1"
+sepby1 :: Parser a -> Parser s -> Parser (List a)
+sepby1 pa ps =
+    pa >>= \a -> list (ps >>> pa) >>= \as -> pure (a:.as)
 
 -- | Write a function that produces a list of values coming off the given parser,
 -- separated by the second given parser.
@@ -272,12 +271,10 @@ sepby1 =
 --
 -- >>> parse (sepby character (is ',')) "a,b,c,,def"
 -- Result >def< "abc,"
-sepby ::
-  Parser a
-  -> Parser s
-  -> Parser (List a)
-sepby =
-  error "todo: Course.MoreParser#sepby"
+sepby :: Parser a -> Parser s -> Parser (List a)
+sepby pa ps =
+    sepby1 pa ps ||| pure Nil
+
 
 -- | Write a parser that asserts that there is no remaining input.
 --
@@ -286,10 +283,8 @@ sepby =
 --
 -- >>> isErrorResult (parse eof "abc")
 -- True
-eof ::
-  Parser ()
-eof =
-  error "todo: Course.MoreParser#eof"
+eof :: Parser ()
+eof = P (\s -> case s of Nil -> Result Nil (); _ -> ErrorResult (ExpectedEof s))
 
 -- | Write a parser that produces a character that satisfies all of the given predicates.
 --
@@ -312,8 +307,8 @@ eof =
 satisfyAll ::
   List (Char -> Bool)
   -> Parser Char
-satisfyAll =
-  error "todo: Course.MoreParser#satisfyAll"
+satisfyAll ps =
+    satisfy (and . sequence ps)
 
 -- | Write a parser that produces a character that satisfies any of the given predicates.
 --
@@ -333,8 +328,8 @@ satisfyAll =
 satisfyAny ::
   List (Char -> Bool)
   -> Parser Char
-satisfyAny =
-  error "todo: Course.MoreParser#satisfyAny"
+satisfyAny ps =
+    satisfy (or . sequence ps)
 
 -- | Write a parser that parses between the two given characters, separated by a comma character ','.
 --
@@ -357,10 +352,6 @@ satisfyAny =
 --
 -- >>> isErrorResult (parse (betweenSepbyComma '[' ']' lower) "a]")
 -- True
-betweenSepbyComma ::
-  Char
-  -> Char
-  -> Parser a
-  -> Parser (List a)
-betweenSepbyComma =
-  error "todo: Course.MoreParser#betweenSepbyComma"
+betweenSepbyComma :: Char -> Char -> Parser a -> Parser (List a)
+betweenSepbyComma c1 c2 p =
+    charTok c1 >>> sepby p (is ',') <* charTok c2
