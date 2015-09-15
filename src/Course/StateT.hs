@@ -99,7 +99,6 @@ runState' sa = runId . runStateT sa
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
 execT :: Functor f => StateT s f a -> s -> f s
 execT sfa s = snd <$> runStateT sfa s
-
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
 exec' :: State' s a -> s -> s
 exec' sfa = runId . execT sfa
@@ -153,8 +152,11 @@ distinct' xs = eval' (filtering f xs) S.empty
 distinctF :: (Ord a, Num a) => List a -> Optional (List a)
 distinctF xs = evalT (filtering f xs) S.empty
     where
-        f x | x >= 100  = StateT (const Empty)
-            | otherwise = StateT (Full . (S.notMember x &&& S.insert x)) 
+        f x | x > 100   = StateT (const Empty)
+            | otherwise = do
+                s <- getT
+                putT (S.insert x s)
+                return (S.notMember x s)
 
 -- | An `OptionalT` is a functor of an `Optional` value.
 data OptionalT f a =
