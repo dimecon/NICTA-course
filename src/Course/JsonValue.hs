@@ -8,6 +8,7 @@ import Course.List
 
 type Assoc = List (Chars, JsonValue)
 
+
 data JsonValue =
      JsonString Chars
    | JsonRational  Bool !Rational

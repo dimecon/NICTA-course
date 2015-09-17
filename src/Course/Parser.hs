@@ -410,7 +410,7 @@ firstNameParser ::
   Parser Chars
 firstNameParser = 
     upper `flbindParser` \a -> 
-        (list lower) `flbindParser` \b ->
+        list lower `flbindParser` \b ->
             valueParser (a :. b)
 
 -- | Write a parser for Person.surname.
@@ -430,8 +430,8 @@ firstNameParser =
 surnameParser :: Parser Chars
 surnameParser =
     upper `flbindParser` \a ->
-        (thisMany 5 lower) `flbindParser` \b ->
-            (list lower) `flbindParser` \c ->
+        thisMany 5 lower `flbindParser` \b ->
+            list lower `flbindParser` \c ->
                 valueParser ((a :. b) ++ c)
 
 -- | Write a parser for Person.smoker.
