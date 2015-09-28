@@ -354,4 +354,4 @@ satisfyAny ps =
 -- True
 betweenSepbyComma :: Char -> Char -> Parser a -> Parser (List a)
 betweenSepbyComma c1 c2 p =
-    charTok c1 >>> sepby p (is ',') <* charTok c2
+    charTok c1 >>> sepby p (charTok ',') <* charTok c2

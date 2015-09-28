@@ -215,7 +215,7 @@ jsonNull = stringTok "null"
 jsonArray ::
   Parser (List JsonValue)
 jsonArray =
-    betweenSepbyComma '[' ']' jsonValue
+    betweenSepbyComma '[' ']' (tok jsonValue)
 
 -- | Parse a JSON object.
 --
@@ -259,13 +259,13 @@ jsonValue ::
   Parser JsonValue
 jsonValue = str ||| jnull ||| jtrue ||| jfalse ||| jArray ||| jObj ||| jRat
     where
-    str  = JsonString <$> jsonString
-    jnull = JsonNull <$ jsonNull
-    jtrue = JsonTrue <$ jsonTrue
-    jfalse = JsonFalse <$ jsonFalse
-    jArray = JsonArray <$> jsonArray
-    jObj   = JsonObject <$> jsonObject
-    jRat   = JsonRational False <$> jsonNumber
+    str  = JsonString <$> tok jsonString
+    jnull = JsonNull <$ tok jsonNull
+    jtrue = JsonTrue <$ tok jsonTrue
+    jfalse = JsonFalse <$ tok jsonFalse
+    jArray = JsonArray <$> tok jsonArray
+    jObj   = JsonObject <$> tok jsonObject
+    jRat   = JsonRational False <$> tok jsonNumber
 
 -- | Read a file into a JSON value.
 --
